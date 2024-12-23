@@ -1,11 +1,29 @@
 import cv2
+import dlib
+from scipy.spatial import distance as dist
+
+# Start video capture from the webcam
+cap = cv2.VideoCapture(0)
 
 # Load the Haar cascade files for face and eyes
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
-# Start video capture from the webcam
-cap = cv2.VideoCapture(0)
+# Load the pre-trained facial landmark detector
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+
+def eye_aspect_ratio(eye):
+    # Compute the Euclidean distances between the vertical eye landmarks
+    A = dist.euclidean(eye[1], eye[5])
+    B = dist.euclidean(eye[2], eye[4])
+
+    # Compute the Euclidean distance between the horizontal eye landmark
+    C = dist.euclidean(eye[0], eye[3])
+
+    # Compute the eye aspect ratio
+    ear = (A + B) / (2.0 * C)
+    return ear
 
 while True:
     # Capture each frame from the webcam
