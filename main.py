@@ -26,43 +26,54 @@ def eye_aspect_ratio(eye):
     return ear
 
 while True:
-    # Capture each frame from the webcam
     ret, frame = cap.read()
-
-    # If the frame was not captured properly, break the loop
     if not ret:
         print("Failed to grab frame")
         break
 
-    # Convert the current frame to grayscale
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = detector(gray_frame)  # Detect faces using dlib
 
-    # Detect faces in the grayscale image
-    faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5)
+    for rect in faces:
+        # Draw rectangles around the detected face
+        x, y, w, h = rect.left(), rect.top(), rect.right(), rect.bottom()
+        cv2.rectangle(frame, (x, y), (w, h), (255, 0, 0), 2)  # Blue for face
 
-    # Loop through each detected face
-    for (x, y, w, h) in faces:
-        # Draw a rectangle around the detected face
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)  # Blue for face
+        # Facial landmarks detection
+        shape = predictor(gray_frame, rect)
+        landmarks = [(shape.part(i).x, shape.part(i).y) for i in range(68)]
 
-        # Extract the region of interest (ROI) for the detected face
-        roi_gray = gray_frame[y:y+h, x:x+w]
+        # Extract eye landmarks
+        left_eye = landmarks[36:42]
+        right_eye = landmarks[42:48]
 
-        # Detect eyes within the ROI (the face region)
+        # Calculate EAR
+        left_ear = eye_aspect_ratio(left_eye)
+        right_ear = eye_aspect_ratio(right_eye)
+        ear = (left_ear + right_ear) / 2.0
+
+        # Blink detection
+        if ear > 0.2:
+            if left_ear < 0.2:
+                print("Left blink detected!")
+            
+            if right_ear < 0.2:
+                print("Right blink detected")
+
+        # Draw circles on eye landmarks (optional)
+        for (lx, ly) in left_eye + right_eye:
+            cv2.circle(frame, (lx, ly), 2, (0, 0, 255), -1)
+
+        # Optional: Detect eyes with Haar cascade (if desired)
+        roi_gray = gray_frame[y:h, x:w]
         eyes = eye_cascade.detectMultiScale(roi_gray)
-
-        # Loop through each detected eye
         for (ex, ey, ew, eh) in eyes:
-            # Draw a rectangle around each detected eye
             cv2.rectangle(frame, (x + ex, y + ey), (x + ex + ew, y + ey + eh), (0, 255, 0), 2)  # Green for eyes
 
-    # Display the frame with rectangles drawn
-    cv2.imshow('Face and Eye Detection', frame)
+    cv2.imshow('Blink Detection', frame)
 
-    # Check for a key press to exit the loop (e.g., press 'q' to quit)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(1) == ord('q'):
         break
 
-# Release the video capture and close all OpenCV windows
 cap.release()
 cv2.destroyAllWindows()
