@@ -25,6 +25,14 @@ def eye_aspect_ratio(eye):
     ear = (A + B) / (2.0 * C)
     return ear
 
+# Parameters
+EAR_THRESHOLD = 0.25  # Threshold for detecting blinks
+MIN_FRAMES_FOR_BLINK = 3  # Minimum frames below threshold to count as a blink
+
+# State variables
+is_blinking = False
+frame_counter = 0
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -54,11 +62,17 @@ while True:
 
         # Blink detection
         if ear > 0.2:
-            if left_ear < 0.2:
-                print("Left blink detected!")
+            if left_ear < EAR_THRESHOLD:
+                frame_counter += 1
+                if frame_counter >= MIN_FRAMES_FOR_BLINK and not is_blinking:
+                    is_blinking = True
+                    print("Left blink detected!")
             
-            if right_ear < 0.2:
-                print("Right blink detected")
+            if right_ear < EAR_THRESHOLD:
+                frame_counter += 1
+                if frame_counter >= MIN_FRAMES_FOR_BLINK and not is_blinking:
+                    is_blinking = True
+                    print("Right blink detected!")
 
         # Draw circles on eye landmarks (optional)
         for (lx, ly) in left_eye + right_eye:
