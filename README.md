@@ -3,6 +3,8 @@ A python project that tracks your eye movements and converts it to computer mous
 
 Libs used: OpenCv, dlib, Scipy
 
+*Project is currently on hold*
+
 # To-Do 
 
 - ~Use OpenCV to access webcam~
